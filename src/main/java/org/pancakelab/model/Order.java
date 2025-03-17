@@ -7,11 +7,13 @@ public class Order {
 	private final UUID id;
 	private final int building;
 	private final int room;
+	//Map<String, Integer> orderItems;
 
 	public Order(int building, int room) {
 		this.id = UUID.randomUUID();
 		this.building = building;
 		this.room = room;
+		//orderItems = new HashMap<String, Integer>();
 	}
 
 	public UUID getId() {
@@ -25,6 +27,10 @@ public class Order {
 	public int getRoom() {
 		return room;
 	}
+
+//	public void setOrderItems(String orderItem, Integer numberToIncrementOrDecrement) {
+//		orderItems.put(orderItem, orderItems.getOrDefault(orderItem, numberToIncrementOrDecrement));
+//	}
 
 	@Override
 	public boolean equals(Object o) {

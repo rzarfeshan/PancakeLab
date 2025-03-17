@@ -2,6 +2,8 @@ package org.pancakelab.model.pancakes;
 
 import java.util.List;
 
+import org.pancakelab.util.Ingredients;
+
 public class DarkChocolate extends PancakeRecipeDecorator {
 
 	public DarkChocolate(PancakeRecipe pancakeRecipe) {
@@ -11,7 +13,7 @@ public class DarkChocolate extends PancakeRecipeDecorator {
 	@Override
 	public List<String> ingredients() {
 		List<String> ingredientsList = super.ingredients();
-		ingredientsList.add("dark chocolate");
+		ingredientsList.add(Ingredients.DARK_CHOCOLATE.getName());
 		return ingredientsList;
 	}
 }

@@ -6,6 +6,15 @@ import java.util.UUID;
 
 public class BasicPancake implements PancakeRecipe {
 	private UUID orderId;
+	private String dishName;
+
+	public BasicPancake(String dishName, UUID orderId) {
+		this.orderId = orderId;
+		this.dishName = dishName;
+	}
+
+	public BasicPancake() {
+	}
 
 	@Override
 	public UUID getOrderId() {
@@ -13,13 +22,13 @@ public class BasicPancake implements PancakeRecipe {
 	}
 
 	@Override
-	public void setOrderId(UUID orderId) {
-		this.orderId = orderId;
+	public List<String> ingredients() {
+		return new ArrayList<>();
 	}
 
 	@Override
-	public List<String> ingredients() {
-		return new ArrayList<>();
+	public String getPancakeDescription() {
+		return dishName;
 	}
 
 }

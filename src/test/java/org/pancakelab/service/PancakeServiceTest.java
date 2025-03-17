@@ -4,6 +4,7 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.pancakelab.datastore.PancakeDataStore;
 import org.pancakelab.exception.ValidationException;
 import org.pancakelab.model.Order;
 import org.pancakelab.util.Ingredients;
@@ -20,7 +21,8 @@ import java.util.UUID;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PancakeServiceTest {
-	private PancakeService pancakeService = new PancakeService();
+	private PancakeDataStore pancakeDataStore = new PancakeDataStore();
+	private PancakeService pancakeService = new PancakeService(pancakeDataStore);
 	private Order order = null;
 
 	private final static String DARK_CHOCOLATE_PANCAKE_DESCRIPTION = "Delicious pancake with dark chocolate!";
@@ -31,7 +33,8 @@ public class PancakeServiceTest {
 	@org.junit.jupiter.api.Order(05)
 	public void GivenOrderDoesNotExist_Test() {
 
-		assertThrows(ValidationException.class, () -> pancakeService.addDarkChocolatePancake(UUID.randomUUID(), 1));
+		assertThrows(ValidationException.class,
+				() -> pancakeService.preparePancake(UUID.randomUUID(), 1, List.of(Ingredients.DARK_CHOCOLATE)));
 
 	}
 
@@ -77,9 +80,9 @@ public class PancakeServiceTest {
 		// setup
 
 		// exercise
-		pancakeService.removePancakes(DARK_CHOCOLATE_PANCAKE_DESCRIPTION, order.getId(), 2);
-		pancakeService.removePancakes(MILK_CHOCOLATE_PANCAKE_DESCRIPTION, order.getId(), 3);
-		pancakeService.removePancakes(MILK_CHOCOLATE_HAZELNUTS_PANCAKE_DESCRIPTION, order.getId(), 1);
+		pancakeService.removePancakes(List.of(Ingredients.DARK_CHOCOLATE), order.getId(), 2);
+		pancakeService.removePancakes(List.of(Ingredients.MILK_CHOCOLATE), order.getId(), 3);
+		pancakeService.removePancakes(List.of(Ingredients.MILK_CHOCOLATE, Ingredients.HAZELNUTS), order.getId(), 1);
 
 		// verify
 		List<String> ordersPancakes = pancakeService.viewOrder(order.getId());

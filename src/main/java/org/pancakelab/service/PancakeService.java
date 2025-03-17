@@ -1,5 +1,6 @@
 package org.pancakelab.service;
 
+import org.pancakelab.datastore.PancakeDataStore;
 import org.pancakelab.exception.ValidationException;
 import org.pancakelab.factory.PancakeFactory;
 import org.pancakelab.model.Order;
@@ -11,155 +12,95 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class PancakeService {
-	private List<Order> orders;
-	private Set<UUID> completedOrders;
-	private Set<UUID> preparedOrders;
-	private List<PancakeRecipe> pancakes;
+
+	private PancakeDataStore pancakeDataStore;
 	private PancakeFactory pancakeFactory;
 
-	public PancakeService() {
-		orders = new ArrayList<>();
-		completedOrders = new HashSet<>();
-		preparedOrders = new HashSet<>();
-		pancakes = new ArrayList<>();
-		pancakeFactory = new PancakeFactory();
+	public PancakeService(PancakeDataStore pancakeDataStore) {
+		this.pancakeDataStore = pancakeDataStore;
+		this.pancakeFactory = new PancakeFactory();
 	}
 
 	public Order createOrder(int building, int room) {
 		Order order = new Order(building, room);
-		orders.add(order);
+		pancakeDataStore.setOrder(order);
 		return order;
 	}
 
-	public void preparePancake(UUID orderId, int count, List<Ingredients> ingredientsList) {
+	public void preparePancake(UUID orderId, int count, List<Ingredients> ingredientsListToPrepare) {
 		validateOrderId(orderId);
+		String dishName = Ingredients.convertIngredientsToString(ingredientsListToPrepare);
 		for (int i = 0; i < count; ++i) {
-			addPancake(pancakeFactory.preparePancake(ingredientsList),
-					orders.stream().filter(o -> o.getId().equals(orderId)).findFirst().get());
+			addPancake(pancakeFactory.preparePancake(ingredientsListToPrepare, dishName, orderId),
+					pancakeDataStore.getOrder(orderId));
 		}
-	}
-
-	@Deprecated
-	public void addDarkChocolatePancake(UUID orderId, int count) {
-		validateOrderId(orderId);
-		for (int i = 0; i < count; ++i) {
-			PancakeRecipe p = new BasicPancake();
-			addPancake(new DarkChocolate(p), orders.stream().filter(o -> o.getId().equals(orderId)).findFirst().get());
-
-		}
-	}
-
-	@Deprecated
-	public void addDarkChocolateWhippedCreamPancake(UUID orderId, int count) {
-		validateOrderId(orderId);
-		for (int i = 0; i < count; ++i) {
-			addPancake(new WhippedCream(new DarkChocolate(new BasicPancake())),
-					orders.stream().filter(o -> o.getId().equals(orderId)).findFirst().get());
-		}
-
-	}
-
-	@Deprecated
-	public void addDarkChocolateWhippedCreamHazelnutsPancake(UUID orderId, int count) {
-		validateOrderId(orderId);
-		for (int i = 0; i < count; ++i) {
-			addPancake(new Hazelnuts(new WhippedCream(new DarkChocolate(new BasicPancake()))),
-					orders.stream().filter(o -> o.getId().equals(orderId)).findFirst().get());
-		}
-
-	}
-
-	@Deprecated
-	public void addMilkChocolatePancake(UUID orderId, int count) {
-		validateOrderId(orderId);
-		for (int i = 0; i < count; ++i) {
-			addPancake(new MilkChocolate(new BasicPancake()),
-					orders.stream().filter(o -> o.getId().equals(orderId)).findFirst().get());
-		}
-
-	}
-
-	@Deprecated
-	public void addMilkChocolateHazelnutsPancake(UUID orderId, int count) {
-		validateOrderId(orderId);
-		for (int i = 0; i < count; ++i) {
-			addPancake(new Hazelnuts(new MilkChocolate(new BasicPancake())),
-					orders.stream().filter(o -> o.getId().equals(orderId)).findFirst().get());
-
-		}
-	}
-
-	public List<String> viewOrder(UUID orderId) {
-		return pancakes.stream().filter(pancake -> pancake.getOrderId().equals(orderId)).map(PancakeRecipe::description)
-				.collect(Collectors.toList());
 	}
 
 	private void addPancake(PancakeRecipe pancake, Order order) {
-		pancake.setOrderId(order.getId());
-		pancakes.add(pancake);
+		pancakeDataStore.setPancakes(order.getId(), pancake);
 
-		OrderLog.logAddPancake(order, pancake.description(), pancakes);
+		OrderLog.logAddPancake(order, pancake.description(), pancakeDataStore.getPancakes(order.getId()));
 	}
 
-	public void removePancakes(String description, UUID orderId, int count) {
+	public void removePancakes(List<Ingredients> ingredientsListToRemove, UUID orderId, int count) {
 
-		final AtomicInteger removedCount = new AtomicInteger(0);
-		pancakes.removeIf(pancake -> {
-			return pancake.getOrderId().equals(orderId) && pancake.description().equals(description)
-					&& removedCount.getAndIncrement() < count;
-		});
+		if (count <= 0) {
+			return; // No pancakes to remove if count is zero or negative
+		}
 
-		Order order = orders.stream().filter(o -> o.getId().equals(orderId)).findFirst().get();
-		OrderLog.logRemovePancakes(order, description, removedCount.get(), pancakes);
+		String description = Ingredients.convertIngredientsToString(ingredientsListToRemove);
+		final AtomicInteger removedCount = pancakeDataStore.removePancake(orderId, description, count);
+
+		Order order = pancakeDataStore.getOrder(orderId);
+		OrderLog.logRemovePancakes(order, description, removedCount.get(), pancakeDataStore.getPancakes(orderId));
 	}
 
 	public void cancelOrder(UUID orderId) {
-		Order order = orders.stream().filter(o -> o.getId().equals(orderId)).findFirst().get();
-		OrderLog.logCancelOrder(order, this.pancakes);
+		Order order = pancakeDataStore.getOrder(orderId);
+		OrderLog.logCancelOrder(order, pancakeDataStore.getPancakes(orderId));
 
-		pancakes.removeIf(pancake -> pancake.getOrderId().equals(orderId));
-		orders.removeIf(o -> o.getId().equals(orderId));
-		completedOrders.removeIf(u -> u.equals(orderId));
-		preparedOrders.removeIf(u -> u.equals(orderId));
+		pancakeDataStore.cancelOrder(orderId);
 
-		OrderLog.logCancelOrder(order, pancakes);
+		OrderLog.logCancelOrder(order, pancakeDataStore.getPancakes(orderId));
 	}
 
 	public void completeOrder(UUID orderId) {
-		completedOrders.add(orderId);
+		pancakeDataStore.setCompletedOrders(orderId);
 	}
 
 	public Set<UUID> listCompletedOrders() {
-		return completedOrders;
+		return pancakeDataStore.getCompletedOrders();
 	}
 
 	public void prepareOrder(UUID orderId) {
-		preparedOrders.add(orderId);
-		completedOrders.removeIf(u -> u.equals(orderId));
+		pancakeDataStore.prepareOrder(orderId);
 	}
 
 	public Set<UUID> listPreparedOrders() {
-		return preparedOrders;
+		return pancakeDataStore.getPreparedOrders();
 	}
 
 	public Object[] deliverOrder(UUID orderId) {
-		if (!preparedOrders.contains(orderId))
+		if (!pancakeDataStore.getPreparedOrders().contains(orderId))
 			return null;
 
-		Order order = orders.stream().filter(o -> o.getId().equals(orderId)).findFirst().get();
-		List<String> pancakesToDeliver = viewOrder(orderId);
-		OrderLog.logDeliverOrder(order, this.pancakes);
+		Order order = pancakeDataStore.getOrder(orderId);
+		List<String> pancakesToDeliver = pancakeDataStore.viewOrder(orderId);
+		OrderLog.logDeliverOrder(order, pancakeDataStore.getPancakes(orderId));
 
-		pancakes.removeIf(pancake -> pancake.getOrderId().equals(orderId));
-		orders.removeIf(o -> o.getId().equals(orderId));
-		preparedOrders.removeIf(u -> u.equals(orderId));
+		pancakeDataStore.deliverOrder(orderId);
 
 		return new Object[] { order, pancakesToDeliver };
 	}
 
 	private void validateOrderId(UUID orderId) {
-		orders.stream().filter(o -> o.getId().equals(orderId)).findFirst().orElseThrow(
-				() -> new ValidationException("OrderId doesn not exist. Please create an order to proceed."));
+		if (pancakeDataStore.getOrder(orderId) == null) {
+			throw new ValidationException("OrderId doesn not exist. Please create an order to proceed.");
+		}
 
+	}
+
+	public List<String> viewOrder(UUID orderId) {
+		return pancakeDataStore.viewOrder(orderId);
 	}
 }

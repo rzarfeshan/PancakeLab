@@ -17,13 +17,13 @@ public abstract class PancakeRecipeDecorator implements PancakeRecipe {
 	}
 
 	@Override
-	public void setOrderId(UUID orderId) {
-		pancakeRecipe.setOrderId(orderId);
+	public List<String> ingredients() {
+		return pancakeRecipe.ingredients();
 	}
 
 	@Override
-	public List<String> ingredients() {
-		return pancakeRecipe.ingredients();
+	public String getPancakeDescription() {
+		return pancakeRecipe.getPancakeDescription();
 	}
 
 }
