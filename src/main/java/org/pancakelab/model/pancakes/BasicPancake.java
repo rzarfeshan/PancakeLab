@@ -13,9 +13,6 @@ public class BasicPancake implements PancakeRecipe {
 		this.dishName = dishName;
 	}
 
-	public BasicPancake() {
-	}
-
 	@Override
 	public UUID getOrderId() {
 		return orderId;

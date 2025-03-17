@@ -28,6 +28,7 @@ public class PancakeServiceTest {
 	private final static String DARK_CHOCOLATE_PANCAKE_DESCRIPTION = "Delicious pancake with dark chocolate!";
 	private final static String MILK_CHOCOLATE_PANCAKE_DESCRIPTION = "Delicious pancake with milk chocolate!";
 	private final static String MILK_CHOCOLATE_HAZELNUTS_PANCAKE_DESCRIPTION = "Delicious pancake with milk chocolate, hazelnuts!";
+	private final static String DARK_CHOCOLATE_WHIPPED_CREAM_PANCAKE_DESCRIPTION ="Delicious pancake with dark chocolate, whipped cream!";
 
 	@Test
 	@org.junit.jupiter.api.Order(05)
@@ -69,7 +70,7 @@ public class PancakeServiceTest {
 				DARK_CHOCOLATE_PANCAKE_DESCRIPTION, MILK_CHOCOLATE_PANCAKE_DESCRIPTION,
 				MILK_CHOCOLATE_PANCAKE_DESCRIPTION, MILK_CHOCOLATE_PANCAKE_DESCRIPTION,
 				MILK_CHOCOLATE_HAZELNUTS_PANCAKE_DESCRIPTION, MILK_CHOCOLATE_HAZELNUTS_PANCAKE_DESCRIPTION,
-				MILK_CHOCOLATE_HAZELNUTS_PANCAKE_DESCRIPTION), ordersPancakes);
+				MILK_CHOCOLATE_HAZELNUTS_PANCAKE_DESCRIPTION, DARK_CHOCOLATE_WHIPPED_CREAM_PANCAKE_DESCRIPTION), ordersPancakes);
 
 		// tear down
 	}
@@ -83,6 +84,7 @@ public class PancakeServiceTest {
 		pancakeService.removePancakes(List.of(Ingredients.DARK_CHOCOLATE), order.getId(), 2);
 		pancakeService.removePancakes(List.of(Ingredients.MILK_CHOCOLATE), order.getId(), 3);
 		pancakeService.removePancakes(List.of(Ingredients.MILK_CHOCOLATE, Ingredients.HAZELNUTS), order.getId(), 1);
+		pancakeService.removePancakes(List.of(Ingredients.DARK_CHOCOLATE, Ingredients.WHIPPED_CREAM), order.getId(), 1);
 
 		// verify
 		List<String> ordersPancakes = pancakeService.viewOrder(order.getId());
@@ -180,5 +182,6 @@ public class PancakeServiceTest {
 		pancakeService.preparePancake(order.getId(), 3, List.of(Ingredients.DARK_CHOCOLATE));
 		pancakeService.preparePancake(order.getId(), 3, List.of(Ingredients.MILK_CHOCOLATE));
 		pancakeService.preparePancake(order.getId(), 3, List.of(Ingredients.MILK_CHOCOLATE, Ingredients.HAZELNUTS));
+		pancakeService.preparePancake(order.getId(), 1, List.of(Ingredients.DARK_CHOCOLATE, Ingredients.WHIPPED_CREAM));
 	}
 }
